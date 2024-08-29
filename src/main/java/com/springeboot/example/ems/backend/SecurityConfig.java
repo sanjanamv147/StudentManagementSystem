@@ -23,10 +23,10 @@ public class SecurityConfig implements Security {
         http
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(new AntPathRequestMatcher("/api/users")).permitAll() // No authentication required for user creation
-                        .requestMatchers(new AntPathRequestMatcher("/api/employees/**")).hasRole("ADMIN") // Restricted to ADMIN role
-                        .requestMatchers(new AntPathRequestMatcher("/api/employees/create")).hasRole("ADMIN")
-                        .requestMatchers(new AntPathRequestMatcher("/api/employees/delete")).hasRole("ADMIN")
-                        .requestMatchers(new AntPathRequestMatcher("/api/employees/update/**")).permitAll()
+                        .requestMatchers(new AntPathRequestMatcher("/api/students/**")).hasRole("ADMIN") // Restricted to ADMIN role
+                        .requestMatchers(new AntPathRequestMatcher("/api/students/create")).hasRole("ADMIN")
+                        .requestMatchers(new AntPathRequestMatcher("/api/students/delete")).hasRole("ADMIN")
+                        .requestMatchers(new AntPathRequestMatcher("/api/students/update/**")).permitAll()
 
                         .anyRequest().authenticated() // All other requests require authentication
                 )
