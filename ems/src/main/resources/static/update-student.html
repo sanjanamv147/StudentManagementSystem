@@ -1,0 +1,192 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Update Student</title>
+
+    <style>
+        body {
+            background-color: #f4f4f4; /* Matches the login page background color */
+            font-family: Arial, sans-serif;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            width: 80%;
+            max-width: 500px;
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        h2 {
+            margin-bottom: 20px;
+            color: #333;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        .form-label {
+            font-weight: bold;
+            color: #333;
+        }
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        .form-control:focus {
+            border-color: #5cb85c;
+            outline: none;
+            box-shadow: 0 0 5px rgba(92, 184, 92, 0.5);
+        }
+        .btn-primary {
+            width: 100%;
+            padding: 10px;
+            background-color: #5cb85c;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s ease-in-out;
+        }
+        .btn-primary:hover {
+            background-color: #4cae4c;
+        }
+        .btn-download {
+            width: 100%;
+            padding: 10px;
+            background-color: #007bff;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s ease-in-out;
+            margin-top: 10px;
+        }
+        .btn-download:hover {
+            background-color: #0056b3;
+        }
+        .error-message {
+            color: red;
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Update Student Details</h2>
+    <form id="updateStudentForm" enctype="multipart/form-data">
+        <input type="hidden" id="studentId" name="studentId">
+        <div class="mb-3">
+            <label for="name" class="form-label">Name</label>
+            <input type="text" class="form-control" id="name" name="name" required>
+        </div>
+        <div class="mb-3">
+            <label for="email" class="form-label">Email</label>
+            <input type="email" class="form-control" id="email" name="email" required>
+        </div>
+        <div class="mb-3">
+            <label for="department" class="form-label">Department</label>
+            <input type="text" class="form-control" id="department" name="department" required>
+        </div>
+        <div class="mb-3">
+            <label for="file" class="form-label">Upload Document</label>
+            <input type="file" class="form-control" id="file" name="file">
+        </div>
+        <button type="submit" class="btn-primary">Update Student</button>
+        <button type="button" id="downloadBtn" class="btn-download" style="display: none;">Download Document</button>
+        <div id="errorMessage" class="error-message"></div>
+    </form>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const studentId = urlParams.get('id');
+
+        if (!studentId) {
+            alert('No student ID provided');
+            return;
+        }
+
+        // Fetch student details
+        fetch(`/api/student/${studentId}`)
+            .then(response => response.json())
+            .then(student => {
+                document.getElementById('studentId').value = student.id;
+                document.getElementById('name').value = student.name;
+                document.getElementById('email').value = student.email;
+                document.getElementById('department').value = student.department;
+            })
+            .catch(error => {
+                console.error('Error fetching student:', error);
+                alert('Error loading student details');
+            });
+
+        // Handle form submission for updating student and uploading file
+        document.getElementById('updateStudentForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            const id = formData.get('studentId');
+
+            // First, update student details
+            fetch(`/api/student/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    name: formData.get('name'),
+                    email: formData.get('email'),
+                    department: formData.get('department')
+                })
+            })
+            .then(response => response.json())
+            .then(() => {
+                alert('Student updated successfully');
+
+                // Handle file upload if a file is selected
+                const fileInput = document.getElementById('file');
+                if (fileInput.files.length > 0) {
+                    const fileFormData = new FormData();
+                    fileFormData.append('file', fileInput.files[0]);
+                    fileFormData.append('studentId', id);
+
+                    return fetch(`/documents/upload`, {
+                        method: 'POST',
+                        body: fileFormData
+                    });
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    alert('File uploaded successfully');
+                    window.location.href = '/retrieve-student.html'; // Redirect to student list
+                } else {
+                    return response.json().then(data => { throw new Error(data.message || 'File upload failed'); });
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('errorMessage').innerText = error.message || 'An error occurred';
+            });
+        });
+    });
+</script>
+
+</body>
+</html>

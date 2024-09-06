@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Student</title>
+    <style>
+        body {
+            background-color: #f4f4f4; /* Matches the login page background color */
+            font-family: Arial, sans-serif;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            width: 80%;
+            max-width: 600px;
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        h2 {
+            margin-bottom: 20px;
+            color: #333;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        .form-label {
+            font-weight: bold;
+            color: #333;
+        }
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        .form-control[readonly] {
+            background-color: #f9f9f9;
+        }
+        .btn-back {
+            width: 100%;
+            padding: 10px;
+            background-color: #5cb85c;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s ease-in-out;
+            text-decoration: none;
+            display: block;
+            margin-top: 20px;
+        }
+        .btn-back:hover {
+            background-color: #4cae4c;
+        }
+        .document-section {
+            margin-top: 20px;
+            text-align: left;
+        }
+        .document-label {
+            font-weight: bold;
+            color: #333;
+        }
+        .document-link {
+            display: block;
+            margin-top: 10px;
+            color: #007bff;
+            text-decoration: none;
+            word-wrap: break-word;
+        }
+        .document-link:hover {
+            color: #0056b3;
+        }
+        .error-message {
+            color: red;
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Student Details</h2>
+    <form id="studentDetailsForm">
+        <input type="hidden" id="studentId">
+        <div>
+            <label for="name" class="form-label">Name</label>
+            <input type="text" class="form-control" id="name" readonly>
+        </div>
+        <div>
+            <label for="email" class="form-label">Email</label>
+            <input type="email" class="form-control" id="email" readonly>
+        </div>
+        <div>
+            <label for="department" class="form-label">Department</label>
+            <input type="text" class="form-control" id="department" readonly>
+        </div>
+
+        <div class="document-section">
+            <label class="document-label">Uploaded Document(s)</label>
+            <div id="documentsList"></div>
+        </div>
+
+        <a href="/retrieve-student.html" class="btn-back">Back to Student List</a>
+        <div id="errorMessage" class="error-message"></div>
+    </form>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const studentId = urlParams.get('id');
+
+        if (!studentId) {
+            alert('No student ID provided');
+            return;
+        }
+
+        // Fetch student details
+        fetch(`/api/student/${studentId}`)
+            .then(response => {
+                if (!response.ok) throw new Error('Network response was not ok');
+                return response.json();
+            })
+            .then(student => {
+                document.getElementById('studentId').value = student.id;
+                document.getElementById('name').value = student.name;
+                document.getElementById('email').value = student.email;
+                document.getElementById('department').value = student.department;
+
+                // Fetch documents associated with the student
+                fetch(`/documents/student/${studentId}`)
+                    .then(response => {
+                        if (!response.ok) throw new Error('Network response was not ok');
+                        return response.json();
+                    })
+                    .then(documents => {
+                        const documentsList = document.getElementById('documentsList');
+                        if (documents.length === 0) {
+                            documentsList.innerHTML = 'No documents available';
+                        } else {
+                            documentsList.innerHTML = documents.map(doc =>
+                                `<a href="${doc.url}" class="document-link" download>${doc.name}</a>`
+                            ).join('');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching documents:', error);
+                        document.getElementById('errorMessage').innerText = 'Error loading documents';
+                    });
+            })
+            .catch(error => {
+                console.error('Error fetching student:', error);
+                document.getElementById('errorMessage').innerText = 'Error loading student details';
+            });
+    });
+</script>
+
+</body>
+</html>
